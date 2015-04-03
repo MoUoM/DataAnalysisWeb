@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Widget</title>
+
+    <link class="include" rel="stylesheet" type="text/css" href="../css/jquery.jqplot.min.css" />
+    <link rel="stylesheet" type="text/css" href="../css/examples.min.css" />
+    <link type="text/css" rel="stylesheet" href="../js/syntaxhighlighter/styles/shCoreDefault.min.css" />
+    <link type="text/css" rel="stylesheet" href="../js/syntaxhighlighter/styles/shThemejqPlot.min.css" />
+	<link rel="stylesheet" href="../css/jquery-ui/jquery-ui.min.css">
+	<link rel="stylesheet" href="widget.css">
+  <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="excanvas.js"></script><![endif]-->
+    <script class="include" type="text/javascript" src="../js/jquery.js"></script>
+  	<script src="../js/jquery-ui/jquery-ui.min.js"></script>
+  	<script src="../js/jquery-ui/datepicker-zh-CN.js"></script>
+  	<script src="widget.js"></script>
+    
+</head>
+<body>
+    <div class="ui-widget ui-corner-all">
+        <div class="ui-widget-content ui-corner-bottom">
+            <div id="chart1"></div>
+        </div>
+    </div>
+	
+	<div>
+		编 号: <input id="code" />
+		开始日期: <input id="startDate" class="startDateCss">
+		结束日期: <input id="endDate" class="endDateCss">
+		<input type="button" id="loadBtn" value="LoadData" />
+	</div>
+	<div id="dialog-message" title="提示信息"></div>
+    <pre class="code brush:js"></pre>
+
+    <script class="code" type="text/javascript">
+        $(document).ready(function () {
+        	init();
+        	$("#loadBtn").button();
+        });
+        
+        function init(){
+        	initDatePick();
+        	initSelectMenu();
+        	initDialog();
+        }
+        
+        function initDialog(){
+        	$("#dialog-message").dialog({
+        		autoOpen: false,
+        		modal: true,
+        		width: 400,
+        		buttons: [
+        			{
+        				text: 'OK',
+        				click: function() {
+        					$( this ).dialog( "close" );
+        				}
+        			}
+        		]
+        	});
+        }
+        
+        //初始化编码列表
+        function initSelectMenu(){
+        	$.get("../cxfService/rest/getAllStockCode",
+                function(data){
+					data = JSON.parse(data); 
+					$("#code").catcomplete({
+					    delay: 0,
+					    source: data
+				    });
+           	    }
+           	);
+        }
+        //初始化日期时间
+        function initDatePick(){
+        	$(".startDateCss, .endDateCss").datepicker({
+        		changeMonth: true,
+        	    changeYear: true,
+        	    dateFormat: 'yy-mm-dd',
+        	    showAnim: 'drop'
+        	}).datepicker($.datepicker.regional["zh-CN"]);
+        }
+        
+        var plot;
+        $("#loadBtn").click(function(){
+        	loadData();
+        });
+	
+        //加载数据
+        function loadData(){
+        	$.jqplot._noToImageButton = true;
+            var code = $("#code").val();
+            var startDate = $("#startDate").val();
+            var endDate = $("#endDate").val();
+            if(code.length == 0 || startDate.length == 0 || endDate.length == 0){
+            	$("#dialog-message").html(code.length == 0 ? "请先输入编号" : "请先选择日期").dialog('open');
+            	return;
+            }
+            $.get("../cxfService/rest/getStockDataByCode/" + code + "/" + startDate + "/" + endDate,
+           	   function(data){
+					console.log(data);
+					data = JSON.parse(data); 
+            		if(data.errMsg){
+            			$("#dialog-message").html(data.errMsg).dialog('open');
+                    	return;
+            		}
+					destory();	//先清空原来的
+					plot = drawPlot(data);
+	              	$('.jqplot-highlighter-tooltip').addClass('ui-corner-all');
+        	   }
+        	);
+        }
+        
+        //画图
+        function drawPlot(data){
+        	var plot = $.jqplot("chart1", [data.arr3, data.arr5, data.arr8, data.arr10
+                                            , data.arr12, data.arr15,data.arr30, data.arr35,
+                                            data.arr40, data.arr45, data.arr50, data.arr60], {
+                seriesColors: ["#EEEE00", "#A020F0", "#B03060", "#AFF0FA",
+                               "#9AFF9A", "#9ACD32", "#8B0A50", "#191970", 
+                               "#1874CD", "#0000CD", "#008B00", "#00EE00"],
+                title: 'Data Analysis',
+                highlighter: {
+                    show: true,
+                    sizeAdjust: 1.5,
+                    tooltipOffset: 9
+                },
+                grid: {
+                    background: 'rgba(57,57,57,0.0)',
+                    drawBorder: false,
+                    shadow: false,
+                    gridLineColor: '#666666',
+                    gridLineWidth: 1
+                },
+                legend: {
+                    show: true,
+                    placement: 'outside'
+                },
+                seriesDefaults: {
+                    rendererOptions: {
+                        smooth: true,
+                        animation: {
+                            show: true
+                        }
+                    },
+                    showMarker: false
+                },
+                series: [
+                    {label: '3天线'}, {label: '5天线'}, {label: '8天线'},
+                    {label: '10天线'}, {label: '12天线'}, {label: '15天线'},
+                    {label: '30天线'}, {label: '35天线'}, {label: '40天线'},
+                    {label: '45天线'}, {label: '50天线'}, {label: '60天线'}
+                ],
+                axesDefaults: {
+                    rendererOptions: {
+                        baselineWidth: 1,
+                        baselineColor: '#555555',
+                        drawBaseline: false
+                    }
+                },
+                axes: {
+                    xaxis: {
+                        renderer: $.jqplot.DateAxisRenderer,
+                        tickOptions: {
+                            formatString: "%b %e",
+                            angle: -30,
+                            textColor: '#FFFFFF'
+                        },
+                        //min: '2014',
+                        drawMajorGridlines: false
+                    },
+                    yaxis: {
+                        //renderer: $.jqplot.LogAxisRenderer,
+                        rendererOptions: {
+                            minorTicks: 0
+                        },
+                        tickOptions: {
+                            showMark: false
+                        }
+                    }
+                }
+            });
+        	
+        	return plot;
+        }
+        
+        //销毁
+        function destory(){
+        	if (plot) {  
+                plot.destroy();  
+          
+                var elementId = '#chart1';  
+                $(elementId).unbind(); // for iexplorer  
+                $(elementId).empty();  
+          
+                plot = null;  
+            }  
+        }
+
+    </script>
+
+
+<!-- End example scripts -->
+
+<!-- Don't touch this! -->
+
+
+    <script class="include" type="text/javascript" src="../js/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="../js/syntaxhighlighter/scripts/shCore.min.js"></script>
+    <script type="text/javascript" src="../js/syntaxhighlighter/scripts/shBrushJScript.min.js"></script>
+    <script type="text/javascript" src="../js/syntaxhighlighter/scripts/shBrushXml.min.js"></script>
+<!-- End Don't touch this! -->
+
+<!-- Additional plugins go here -->
+    <script class="include" type="text/javascript" src="../js/plugins/jqplot.dateAxisRenderer.min.js"></script>
+    <script class="include" type="text/javascript" src="../js/plugins/jqplot.logAxisRenderer.min.js"></script>
+    <script class="include" type="text/javascript" src="../js/plugins/jqplot.canvasTextRenderer.min.js"></script>
+    <script class="include" type="text/javascript" src="../js/plugins/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script class="include" type="text/javascript" src="../js/plugins/jqplot.highlighter.min.js"></script>
+
+<!-- End additional plugins -->
+
+
+	<script type="text/javascript" src="../js/example.min.js"></script>
+
+</body>
+
+
+</html>

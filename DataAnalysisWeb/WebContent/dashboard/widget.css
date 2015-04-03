@@ -1,0 +1,25 @@
+body {
+	font: 62.5% "Trebuchet MS", sans-serif;
+	margin: 10px 20px;
+}
+
+.jqplot-target {
+	margin: 20px;
+	height: 700px;
+	width: 800px;
+}
+
+.ui-widget-content {
+	background: rgb(57, 57, 57);
+}
+
+table.jqplot-table-legend {
+	border: 0px;
+	background-color: rgba(100, 100, 100, 0.0);
+}
+
+.jqplot-highlighter-tooltip {
+	background-color: rgba(57, 57, 57, 0.9);
+	padding: 7px;
+	color: #dddddd;
+}
