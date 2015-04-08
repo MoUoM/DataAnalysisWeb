@@ -20,6 +20,7 @@ public class StockServiceImpl extends StockDao{
 		if(stockList.size() == 0)
 			return new JSONObject().element("errMsg", "查询不到数据").toString();
 		
+		//移动平均线
 		JSONArray arr3 = shuanshupingjunxian(stockList, 3);
 		JSONArray arr5 = shuanshupingjunxian(stockList, 5);
 		JSONArray arr8 = shuanshupingjunxian(stockList, 8);
@@ -42,13 +43,26 @@ public class StockServiceImpl extends StockDao{
 		json.element("arr12", arr12);
 		json.element("arr15", arr15);
 		
-
 		json.element("arr30", arr30);
 		json.element("arr35", arr35);
 		json.element("arr40", arr40);
 		json.element("arr45", arr45);
 		json.element("arr50", arr50);
 		json.element("arr60", arr60);
+		//移动平均线
+		
+		//CandleStick Data
+		JSONArray arr = new JSONArray();
+		for (DayStockData dsd : stockList) {
+			JSONArray array = new JSONArray();
+			array.add(dsd.getDate());
+			array.add(dsd.getOpen());
+			array.add(dsd.getHigh());
+			array.add(dsd.getClose());
+			array.add(dsd.getLow());
+			arr.add(array);
+		}
+		json.element("candleData", arr);
 		
 		return json.toString();
 	}
