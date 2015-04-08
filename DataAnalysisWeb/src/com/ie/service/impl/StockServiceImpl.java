@@ -58,8 +58,8 @@ public class StockServiceImpl extends StockDao{
 			array.add(dsd.getDate());
 			array.add(dsd.getOpen());
 			array.add(dsd.getHigh());
-			array.add(dsd.getClose());
 			array.add(dsd.getLow());
+			array.add(dsd.getClose());
 			arr.add(array);
 		}
 		json.element("candleData", arr);
